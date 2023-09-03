@@ -23,6 +23,16 @@ void terminal_writechar_pos(unsigned char c, size_t terminal_row, size_t termina
 
 void terminal_writechar(unsigned char c)
 {
+	if (c == '\n')
+	{
+		column = 0;
+		row++;
+		if (row == VGA_TEXT_HEIGHT)
+			row = 0;
+
+		return;
+	}
+
 	terminal_writechar_pos(c, row, column);
 	column++;
 
@@ -52,6 +62,16 @@ void terminal_writestring_pos(const char* str, size_t row, size_t column)
 {
 	for (size_t i = 0; i < strlen(str); i++)
 	{
+		if (str[i] == '\n')
+		{
+			column = 0;
+			row++;
+			if (row >= VGA_TERMINAL_HEIGHT)
+				row = 0;
+
+			continue;
+		}
+
 		terminal_writechar_pos(str[i], row, column);
 		column++;
 

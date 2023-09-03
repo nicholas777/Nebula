@@ -4,6 +4,7 @@
 void kernel() 
 {
 	terminal_init();
-	terminal_writestring("Hello, World!");
+	terminal_writestring("Hello, World!\n");
+	terminal_writestring("Hello, Again!");
 }
 
