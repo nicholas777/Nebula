@@ -1,0 +1,40 @@
+
+ARCH := $(shell ../arch.sh)
+ARCH_DIR := arch/$(ARCH)
+
+GNU_ARCH := $(shell ../compiler-arch.sh)
+
+BIN_DIR := ../bin
+
+CC := $(GNU_ARCH)-gcc
+LD := $(GNU_ARCH)-ld
+AS := $(GNU_ARCH)-as
+
+CFLAGS := -std=gnu99 -ffreestanding -Wall -Wextra -O2 
+CPPFLAGS := 
+LDFLAGS := -ffreestanding -O2 -nostdlib -lgcc -T $(ARCH_DIR)/linker.ld
+
+SYSTEM_DIR := ../sys
+INCLUDE_DIR := $(SYSTEM_DIR)/lib
+CPPFLAGS := $(CPPFLAGS) -I$(INCLUDE_DIR)
+
+include $(ARCH_DIR)/make.cfg
+
+OBJ_FILES := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o
+
+HEADERS := $(wildcard include/*.h)
+
+all: install-headers $(OBJ_FILES)
+	$(CC) $(LDFLAGS) $(OBJ_FILES) -o $(BIN_DIR)/kernel.bin
+
+install-headers:
+	@echo "Installing the system headers"
+	@mkdir -p $(INCLUDE_DIR)/kernel
+	@cp $(HEADERS) $(INCLUDE_DIR)/kernel
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+%.o: %.s
+	$(AS) $< -o $@
+

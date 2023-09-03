@@ -1,0 +1,5 @@
+*.bin
+*.o
+*.out
+sys/*.h
+sys/*.so
