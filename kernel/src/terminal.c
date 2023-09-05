@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "kernel/terminal.h"
 
 size_t column, row;
@@ -48,15 +49,6 @@ void terminal_writechar(unsigned char c)
 	}
 }
 
-size_t strlen(const char* str)
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-
-	return len;
-}
-
 // Does not affect the cursor
 void terminal_writestring_pos(const char* str, size_t row, size_t column)
 {
@@ -66,7 +58,7 @@ void terminal_writestring_pos(const char* str, size_t row, size_t column)
 		{
 			column = 0;
 			row++;
-			if (row >= VGA_TERMINAL_HEIGHT)
+			if (row >= VGA_TEXT_HEIGHT)
 				row = 0;
 
 			continue;

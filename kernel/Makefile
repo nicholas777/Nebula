@@ -12,11 +12,14 @@ AS := $(GNU_ARCH)-as
 
 CFLAGS := -std=gnu99 -ffreestanding -Wall -Wextra -O2 
 CPPFLAGS := 
-LDFLAGS := -ffreestanding -O2 -nostdlib -lgcc -T $(ARCH_DIR)/linker.ld
+LDFLAGS := -ffreestanding -O2 -lk -nostdlib -lgcc -T $(ARCH_DIR)/linker.ld
 
 SYSTEM_DIR := ../sys
-INCLUDE_DIR := $(SYSTEM_DIR)/lib
+INCLUDE_DIR := $(SYSTEM_DIR)/include
+LIB_DIR := $(SYSTEM_DIR)/lib
 CPPFLAGS := $(CPPFLAGS) -I$(INCLUDE_DIR)
+LDFLAGS := $(LDFLAGS) --sysroot=$(SYSTEM_DIR)
+CFLAGS := $(CFLAGS) --sysroot=$(SYSTEM_DIR) -isystem=/include/libc
 
 include $(ARCH_DIR)/make.cfg
 
@@ -25,7 +28,10 @@ OBJ_FILES := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o
 HEADERS := $(wildcard include/*.h)
 
 all: install-headers $(OBJ_FILES)
-	$(CC) $(LDFLAGS) $(OBJ_FILES) -o $(BIN_DIR)/kernel.bin
+	$(CC) $(OBJ_FILES) $(LDFLAGS) -o $(BIN_DIR)/kernel.bin
+	@echo "Copying the kernel file..."
+	@mkdir -p $(LIB_DIR)/kernel
+	@cp $(BIN_DIR)/kernel.bin $(LIB_DIR)/kernel
 
 install-headers:
 	@echo "Installing the system headers"
@@ -33,7 +39,7 @@ install-headers:
 	@cp $(HEADERS) $(INCLUDE_DIR)/kernel
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -std=gnu11 $(CPPFLAGS) -c $< -o $@
 
 %.o: %.s
 	$(AS) $< -o $@
