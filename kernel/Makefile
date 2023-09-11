@@ -23,7 +23,11 @@ CFLAGS := $(CFLAGS) --sysroot=$(SYSTEM_DIR) -isystem=/include/libc
 
 include $(ARCH_DIR)/make.cfg
 
-OBJ_FILES := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o
+KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o
+OBJ_FILES := \
+	$(ARCH_DIR)/src/crti.o $(ARCH_DIR)/src/crtbegin.o \
+	$(KERNEL_OBJS) \
+	$(ARCH_DIR)/src/crtend.o $(ARCH_DIR)/src/crtn.o
 
 HEADERS := $(wildcard include/*.h)
 
@@ -38,9 +42,16 @@ install-headers:
 	@mkdir -p $(INCLUDE_DIR)/kernel
 	@cp $(HEADERS) $(INCLUDE_DIR)/kernel
 
+$(ARCH_DIR)/src/crtbegin.o $(ARCH_DIR)/src/crtend.o:
+	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
+
 %.o: %.c
 	$(CC) $(CFLAGS) -std=gnu11 $(CPPFLAGS) -c $< -o $@
 
 %.o: %.s
 	$(AS) $< -o $@
+
+clean:
+	@rm src/*.o
+	@rm arch/*/src/*.o
 

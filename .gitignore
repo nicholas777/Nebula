@@ -1,5 +1,6 @@
 *.bin
 *.o
 *.out
+*.a
 sys/**.h
-sys/**.a
+
