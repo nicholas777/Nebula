@@ -1,5 +1,6 @@
 .extern int13_handler
 .extern int32_handler
+.extern terminal_writestring
 
 .section .text
 
@@ -14,6 +15,8 @@ asm_isr13:
     iret
 
 .globl asm_isr33
+.align 4
+
 asm_isr33:
     pushal
 
@@ -21,4 +24,6 @@ asm_isr33:
 
     popal
     sti
+
     iret
+

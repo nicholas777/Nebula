@@ -8,7 +8,7 @@ LD := $(GNU_ARCH)-ld
 AS := $(GNU_ARCH)-as
 AR := $(GNU_ARCH)-ar
 
-CFLAGS_LIBK := -ffreestanding --std=gnu11 Wall -Wextra -O2 
+CFLAGS_LIBK := -ffreestanding --std=gnu11 -Wall -Wextra -O2 
 CPPFLAGS_LIBK := -D_IS__LIBK -Iinclude
 
 SYSTEM_DIR := ../sys
@@ -17,7 +17,7 @@ LIBC_LIBK_DIR := $(SYSTEM_DIR)/lib
 CPPFLAGS_LIBK := $(CPPFLAGS_LIBK) -I$(INCLUDE_DIR)
 
 HEADERS := $(wildcard include/*.h)
-OBJ_FILES := src/string.o
+OBJ_FILES := src/string.o src/stdlib.o
 
 all: install-headers all-libk
 

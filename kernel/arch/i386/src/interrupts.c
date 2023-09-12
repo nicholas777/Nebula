@@ -18,11 +18,11 @@
 
 #define KEYBOARD_CONTROLLER 0x64
 #define KEYBOARD_OUTPUT 0x60
-#define DISABLE_KEYBOARD 0xAE
+#define ENABLE_KEYBOARD 0xAE
 
 void setup_keyboard()
 {
-	outb(KEYBOARD_CONTROLLER, DISABLE_KEYBOARD);
+	outb(KEYBOARD_CONTROLLER, ENABLE_KEYBOARD);
 	outb(KEYBOARD_CONTROLLER, 0x20); // Use IRQ 1
 	inb(KEYBOARD_OUTPUT); // Empties the output buffer
 }
@@ -44,7 +44,7 @@ void remap_irqs()
 	outb(PIC2_DATA, PIC_8086_MODE);
 
 	outb(PIC1_DATA, 0xFD);
-	outb(PIC2_DATA, 0x0);
+	outb(PIC2_DATA, 0xFF);
 
 	setup_keyboard();
 }
@@ -104,6 +104,11 @@ void int13_handler()
 
 void int33_handler()
 {
-	terminal_writestring("ISR-33!\n");
+    int scancode = inb(0x60);
+    char buf[8];
+    terminal_writestring(itoa(scancode, buf, 10));
+    terminal_writechar(' ');
+
 	outb(PIC1_CMD, 0x20); // EOI
 }
+
