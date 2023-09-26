@@ -1,5 +1,6 @@
 #include "kernel/terminal.h"
 #include "kernel/io.h"
+#include "kernel/interrupts.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -51,6 +52,7 @@ void remap_irqs()
 
 // The ISRs from assembly
 extern void asm_isr13(void);
+extern void asm_isr14(void);
 extern void asm_isr33(void);
 
 typedef struct 
@@ -80,35 +82,47 @@ void set_idt_entry(idt_entry* idt, uint32_t num, uint32_t isr_ptr, uint16_t sele
 static idt_entry idt[256];
 static idt_descriptor idtd;
 
+static void* interrupt_handlers[256];
+
+void register_interrupt_handler(int handler, void* function)
+{
+    if (handler < 0 || handler > 255)
+        return;
+
+    interrupt_handlers[handler] = function;
+}
+
 void generate_idt()
 {
 	for (size_t i = 0; i < 256; i++)
 	{
 		// set_idt_entry(idt, i, (uint32_t)asm_isr33, 0x8, 0b10001110);
 		set_idt_entry(idt, i, 0, 0x0, 0b00001110);
+        interrupt_handlers[i] = NULL;
 	}
 
-	set_idt_entry(idt, 13, (uint32_t)asm_isr13, 0x8, 0b10001110);
-	set_idt_entry(idt, 33, (uint32_t)asm_isr33, 0x8, 0b10001110);
+    set_idt_entry(idt, 13, (uint32_t)asm_isr13, 0x8, 0b10001110);
+    set_idt_entry(idt, 14, (uint32_t)asm_isr14, 0x8, 0b10001110);
+    set_idt_entry(idt, 33, (uint32_t)asm_isr33, 0x8, 0b10001110);
 
-	idtd.size = sizeof(idt_entry) * 256 - 1;
-	idtd.offset = (uint32_t)idt;
+    idtd.size = sizeof(idt_entry) * 256 - 1;
+    idtd.offset = (uint32_t)idt;
 
-	asm volatile ("lidt (%0)" : : "r"(&idtd));
+    asm volatile ("lidt (%0)" : : "r"(&idtd));
 }
 
-void int13_handler()
+void int_handler(int isr)
 {
-	terminal_writestring("General Protection Fault");
-}
+    if (interrupt_handlers[isr] == NULL)
+        return;
 
-void int33_handler()
-{
-    int scancode = inb(0x60);
-    char buf[8];
-    terminal_writestring(itoa(scancode, buf, 10));
-    terminal_writechar(' ');
+    ((isr_t)interrupt_handlers[isr])();
 
-	outb(PIC1_CMD, 0x20); // EOI
+    if (isr >= 0x20 && isr <= 0x30)
+    {
+        outb(PIC1_CMD, 0x20); // EOI
+        if (isr >= 0x28)
+            outb(PIC2_CMD, 0x20); // EOI
+    }
 }
 

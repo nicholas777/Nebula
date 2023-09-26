@@ -23,7 +23,8 @@ CFLAGS := $(CFLAGS) --sysroot=$(SYSTEM_DIR) -isystem=/include/libc
 
 include $(ARCH_DIR)/make.cfg
 
-KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o
+KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o \
+			   src/keyboard.o
 OBJ_FILES := \
 	$(ARCH_DIR)/src/crti.o $(ARCH_DIR)/src/crtbegin.o \
 	$(KERNEL_OBJS) \
@@ -32,6 +33,7 @@ OBJ_FILES := \
 HEADERS := $(wildcard include/*.h)
 
 all: install-headers $(OBJ_FILES)
+	@mkdir -p $(BIN_DIR)
 	$(CC) $(OBJ_FILES) $(LDFLAGS) -o $(BIN_DIR)/kernel.bin
 	@echo "Copying the kernel file..."
 	@mkdir -p $(LIB_DIR)/kernel

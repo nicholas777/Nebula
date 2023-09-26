@@ -1,20 +1,17 @@
 #include "kernel/vga.h"
 #include "kernel/terminal.h"
+#include "kernel/keyboard.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 void kernel() 
 {
-	terminal_writestring("Hello, World!\n");
-	terminal_writestring("Hello, Again!");
+    terminal_writestring("Kernel init");
+    init_keyboard();
 
-    char buf[20];
+    asm volatile ("sti");
 
-    terminal_writestring(itoa(8, buf, 2));
-
-    terminal_writechar('\n');
-    terminal_writechar('\n');
 	while (true)
         ;
 

@@ -22,6 +22,7 @@ OBJ_FILES := src/string.o src/stdlib.o
 all: install-headers all-libk
 
 all-libk: $(OBJ_FILES)
+	@mkdir -p $(LIBC_LIBK_DIR)
 	$(AR) rcs $(LIBC_LIBK_DIR)/libk.a $(OBJ_FILES)
 
 %.o: %.c

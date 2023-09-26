@@ -1,6 +1,4 @@
-.extern int13_handler
-.extern int32_handler
-.extern terminal_writestring
+.extern int_handler
 
 .section .text
 
@@ -8,19 +6,33 @@
 asm_isr13:
     pushal
     
-    call int13_handler
+    pushl $13
+    call int_handler
+    addl $4, %esp
 
     popal
     sti
     iret
 
-.globl asm_isr33
-.align 4
+.globl asm_isr14 # Paging fault
+asm_isr14:
+    pushal
+    
+    pushl $14
+    call int_handler
+    addl $4, %esp
 
+    popal
+    sti
+    iret
+
+.globl asm_isr33 # Keyboard
 asm_isr33:
     pushal
 
-    call int33_handler
+    pushl $33
+    call int_handler
+    addl $4, %esp
 
     popal
     sti

@@ -88,8 +88,6 @@ continue_processing:
 	push %eax
 	
 	call generate_idt
-	sti
-	
 	call remap_irqs
 
 	call kernel
