@@ -23,6 +23,10 @@ CFLAGS := $(CFLAGS) --sysroot=$(SYSTEM_DIR) -isystem=/include/libc
 
 include $(ARCH_DIR)/make.cfg
 
+CFLAGS := $(CFLAGS) $(ARCH_CFLAGS)
+CPPFLAGS := $(CPPFLAGS) $(ARCH_CPPFLAGS)
+LDFLAGS := $(LDFLAGS) $(ARCH_LDFLAGS)
+
 KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o \
 			   src/keyboard.o
 OBJ_FILES := \
