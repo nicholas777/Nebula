@@ -1,35 +1,32 @@
 ENTRY(_start)
  
-/* Tell where the various sections of the object files will be put in the final
-   kernel image. */
-SECTIONS
-{
-	/* Begin putting sections at 1 MiB */
-	. = 1M;
+SECTIONS {
+    . = 0x00100000;
+
+    __kernel_start = .;
+    .multiboott : {
+        *(.multiboot.data)
+        *(.multiboot.text)
+    }
+
+    . += 0xC0000000;
+    .text ALIGN(4K) : AT (ADDR (.text) - 0xC0000000) {
+        *(.text)
+    }
+
+    .rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000) {
+        *(.rodata)
+    }
  
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-		*(.multiboot)
-		*(.text)
-	}
+    .data ALIGN(4K) : AT(ADDR (.data) - 0xC0000000) {
+        *(.data)
+    }
  
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
- 
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
- 
-	/* Read-write data (uninitialized) and stack */
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-	}
+    .bss ALIGN(4K) : AT(ADDR (.bss) - 0xC0000000) {
+        *(COMMON)
+        *(.bss)
+    }
+
+    __kernel_end = .;
 }
 

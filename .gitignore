@@ -3,4 +3,5 @@
 *.out
 *.a
 sys/**.h
+bin/
 

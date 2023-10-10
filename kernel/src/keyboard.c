@@ -5,8 +5,7 @@
 
 #include <stdlib.h>
 
-char scancode_ascii_table[128] = 
-{
+char scancode_ascii_table[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',   
     '\t', /* <-- Tab */
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',     
@@ -40,13 +39,11 @@ char scancode_ascii_table[128] =
     0,  /* All other keys are undefined */   
 };
 
-char scancode_to_ascii(int scancode)
-{
+char scancode_to_ascii(int scancode) {
     return scancode_ascii_table[scancode > 0x80 ? scancode - 0x80 : scancode];
 }
 
-void keyboard_isr()
-{
+void keyboard_isr() {
     int scancode = inb(0x60);
     char key = scancode_to_ascii(scancode);
 
@@ -54,8 +51,7 @@ void keyboard_isr()
         terminal_writechar(key);
 }
 
-void init_keyboard()
-{
+void init_keyboard() {
     register_interrupt_handler(33, keyboard_isr);
 }
 

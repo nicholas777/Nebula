@@ -12,7 +12,7 @@ AS := $(GNU_ARCH)-as
 
 CFLAGS := -std=gnu99 -ffreestanding -Wall -Wextra -O2 
 CPPFLAGS := 
-LDFLAGS := -ffreestanding -O2 -lk -nostdlib -lgcc -T $(ARCH_DIR)/linker.ld
+LDFLAGS := -ffreestanding -lk -nostdlib -lgcc -n -T $(ARCH_DIR)/linker.ld
 
 SYSTEM_DIR := ../sys
 INCLUDE_DIR := $(SYSTEM_DIR)/include
@@ -28,7 +28,7 @@ CPPFLAGS := $(CPPFLAGS) $(ARCH_CPPFLAGS)
 LDFLAGS := $(LDFLAGS) $(ARCH_LDFLAGS)
 
 KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o \
-			   src/keyboard.o
+			   src/keyboard.o src/exceptions.o
 OBJ_FILES := \
 	$(ARCH_DIR)/src/crti.o $(ARCH_DIR)/src/crtbegin.o \
 	$(KERNEL_OBJS) \
@@ -42,6 +42,14 @@ all: install-headers $(OBJ_FILES)
 	@echo "Copying the kernel file..."
 	@mkdir -p $(LIB_DIR)/kernel
 	@cp $(BIN_DIR)/kernel.bin $(LIB_DIR)/kernel
+
+	@echo "Creating iso image..."
+	@rm -f $(BIN_DIR)/nebula.iso
+	@mkdir -p $(BIN_DIR)/boot/grub
+	@mv $(BIN_DIR)/kernel.bin $(BIN_DIR)/boot
+	@echo "menuentry NebulaOS {\n\tmultiboot /boot/kernel.bin\n}" > $(BIN_DIR)/boot/grub/grub.cfg
+	@grub-mkrescue -o $(BIN_DIR)/nebula.iso $(BIN_DIR)
+
 
 install-headers:
 	@echo "Installing the system headers"

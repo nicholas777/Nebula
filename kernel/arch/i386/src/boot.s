@@ -5,7 +5,7 @@
 .set MAGIC,    0x1BADB002       
 .set CHECKSUM, -(MAGIC + FLAGS) 
 
-.section .multiboot
+.section .multiboot.data, "aw"
 .align 4 // Multiboot has to be aligned by 4
 .long MAGIC
 .long FLAGS
@@ -61,21 +61,72 @@ gdt_desc:
 .word gdt_start - gdt_end - 1
 .long gdt_start
 
-.section .text
+.section .bss
+.align 4096
+
+page_directory:
+    .skip 4096
+page_table1:
+    .skip 4096
+
+.section .multiboot.text
 
 .globl _start
 .type _start, @function
 
 _start:
+    // Map the pages of the kernel so that we can run the c code
+    movl $0, %eax // Start at memory address 0
+    movl $(page_table1 - 0xC0000000), %ebx
+    movl $1023, %ecx
+
+1:
+    // Skip all addresses before the kernel and all after it
+    cmpl $__kernel_start, %eax
+    jl 2f
+    cmpl $(__kernel_end - 0xC0000000), %eax
+    jge 3f
+
+    // Map the page entry
+    movl %eax, %edx
+    orl $0x3, %edx
+    movl %edx, (%ebx)
+2:
+    addl $4096, %eax
+    addl $4, %ebx
+
+    loop 1b
+3:
+    // Mapping the video RAM to 1024th page table entry
+    movl $(0x000B8000 + 0x3), page_table1 - 0xC0000000 + 1023 * 4
+
+    // We map it both in identity mapping and higher half mapping 
+    movl $(page_table1 - 0xC0000000 + 0x3), page_directory - 0xC0000000
+    movl $(page_table1 - 0xC0000000 + 0x3), page_directory - 0xC0000000 + 768 * 4
+
+    movl $(page_directory - 0xC0000000), %eax
+    movl %eax, %cr3
+
+    movl %cr0, %eax
+    orl $0x80010000, %eax
+    movl %eax, %cr0
+
+    lea 4f, %eax
+    jmp *%eax
+
+.section .text
+
+4:
+    movl $0, page_directory
+
+    // Reload the page directory without the identity mapping
+    movl %cr3, %eax
+    movl %eax, %cr3
+
     movl $stack_top, %esp
+
     cli
     call kernel
-
-// Infinite loop
-_halt: 
-    cli
-    hlt
-    jmp _halt
 
 .type setup_gdt, @function
 .globl setup_gdt
@@ -91,15 +142,12 @@ setup_gdt:
     movw %ax, %fs
     movw %ax, %gs
     movw %ax, %ss
-    ljmp $0x08, $far_jump
+    ljmp $0x08, $continue_processing
 
 continue_processing:
     movl %ebp, %esp
     popl %ebp
     ret
-
-far_jump:
-    jmp continue_processing
 
 .type setup_interrupts_x86, @function
 .globl setup_interrupts_x86
