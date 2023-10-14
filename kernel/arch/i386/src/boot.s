@@ -75,6 +75,9 @@ page_table1:
 .type _start, @function
 
 _start:
+    // Save the address to the multiboot structure
+    movl %ebx, %esi
+
     // Map the pages of the kernel so that we can run the c code
     movl $0, %eax // Start at memory address 0
     movl $(page_table1 - 0xC0000000), %ebx
@@ -126,7 +129,10 @@ _start:
     movl $stack_top, %esp
 
     cli
+
+    pushl %esi
     call kernel
+    addl $4, %esp
 
 .type setup_gdt, @function
 .globl setup_gdt
@@ -168,7 +174,7 @@ enable_paging_x86:
     pushl %ebp
     movl %esp, %ebp
 
-    call setup_page_directory
+    // call setup_page_directory
 
     movl %eax, %cr3
     movl %cr0, %eax
