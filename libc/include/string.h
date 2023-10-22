@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define NULL 0
+
 int memcmp(const void* buf1, const void* buf2, size_t count);
 void* memcpy(void *dest, const void* src, size_t count);
 void* memmove(void* dest, const void* src, size_t count);

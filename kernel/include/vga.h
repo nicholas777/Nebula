@@ -31,9 +31,7 @@ typedef enum {
 
 typedef uint16_t vga_entry_t;
 
-inline vga_entry_t format_vga_entry(vga_color_t fg, vga_color_t bg, unsigned char c) {
-    return (uint16_t)fg << 8 | (uint16_t)bg << 12 | (uint16_t)c;
-}
+vga_entry_t format_vga_entry(vga_color_t fg, vga_color_t bg, unsigned char c);
 
 // Write a char at the specified location
 void vga_put_char(vga_entry_t entry, size_t row, size_t column);

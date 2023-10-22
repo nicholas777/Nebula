@@ -2,41 +2,84 @@
 #include "kernel/keyboard.h"
 #include "kernel/interrupts.h"
 #include "kernel/memory.h"
+#include "kernel/multiboot.h"
+#include "kernel/common.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 
 #if defined(__x86__)
 extern void setup_gdt();
 extern void setup_interrupts_x86();
 #endif
 
-void kernel(void* multiboot) {
+extern void* __kernel_start, __kernel_end;
+
+void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap) {
     terminal_init();
 
-    //multiboot_t multiboot_parsed = parse_multiboot_structure(multiboot);
-
 #if defined(__x86__)
-    terminal_writestring("Initializing GDT and interrupts...\n");
+    printf("Initializing GDT and interrupts...\n");
     setup_gdt();
     setup_interrupts_x86();
     init_exception_handlers();
 #endif
 
-    terminal_writestring("Initializing the memory manager...\n");
+    printf("Initializing the memory manager...\n");
     init_pmm();
+
+#if defined(__x86__)
+    // Parsing the multiboot info structure
+    if (!(multiboot->flags >> 6 & 0x1))
+        kpanic_err("No memory map in multiboot");
+
+    uintptr_t mmap_start = (uintptr_t)mmap;
+
+    for (; (uintptr_t)mmap < mmap_start + multiboot->mmap_length; 
+            mmap = (uint8_t*)mmap + mmap->size + sizeof(mmap->size)) {
+        if (mmap->type == 1)
+            continue;
+        
+        uint32_t startPage = mmap->addr / 4096;
+        uint32_t endPage = (mmap->addr + mmap->len) / 4096;
+
+        mask_pages(startPage, endPage);
+    }
+
+#endif
+
     uint32_t* pd = init_vmm();
 
-    terminal_writestring("Initializing keyboard...\n");
+    // Mapping the kernel
+    uint32_t kernel_size = ((uintptr_t)&__kernel_end - 0xC0000000) - (uintptr_t)&__kernel_start;
+    printf("Kernel size: %x\n", kernel_size);
+
+    uint32_t kernel_pages = (kernel_size / PAGE_SIZE) + 1;
+    printf("Kernel covers %u pages\n", kernel_pages);
+
+    if (kernel_pages > 1024)
+        kpanic_err("Error: kernel covers more than 1024 pages");
+
+    // The first page table is reserved for the other page tables
+    uintptr_t kernel_virtual_addr = &__kernel_start + 0xC0001000;
+
+    for (uint32_t i = &__kernel_start; i < &__kernel_end; i += PAGE_SIZE) {
+        map_page(pd, kernel_virtual_addr, i, 0x3);
+        kernel_virtual_addr += 0x00001000;
+    }
+
+    printf("Initializing keyboard...\n");
     init_keyboard();
 
-    terminal_writestring("Kernel initialization complete!\n");
+    printf("Kernel initialization complete!\n");
 
     asm volatile ("sti");
 
     while (true)
         ;
 
-    terminal_writestring("Kernel exit\n");
+    printf("Kernel exit\n");
 }
 

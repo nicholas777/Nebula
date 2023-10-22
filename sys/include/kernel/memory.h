@@ -3,9 +3,14 @@
 
 #include <stdint.h>
 
+#define PAGE_SIZE 4096
+
 // Physical memory manager
 uintptr_t allocate_physical_page();
 void free_physical_page(uintptr_t page);
+
+// This marks pages from start to end as used, only used by the kernel
+void mask_pages(uint32_t start, uint32_t end);
 
 void init_pmm();
 
@@ -26,7 +31,5 @@ typedef struct {
 typedef struct {
     multiboot_memorymap_t mmap;
 } multiboot_t;
-
-multiboot_t parse_multiboot_structure(void*);
 
 #endif

@@ -4,7 +4,7 @@ SECTIONS {
     . = 0x00100000;
 
     __kernel_start = .;
-    .multiboott : {
+    .multiboot : {
         *(.multiboot.data)
         *(.multiboot.text)
     }

@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
-uint8_t page_bitmap[131072]; // (1024 * 1024) / 8
+#define MAX_PAGES 131072 // (1024 * 1024) / 8
+
+uint8_t page_bitmap[MAX_PAGES];
 
 #define FREE 0
 #define USED 1
@@ -16,7 +18,7 @@ void init_pmm() {
 uintptr_t allocate_physical_page() {
     for (size_t i = 0; i < sizeof(page_bitmap); i++) {
         for (size_t j = 0; j < 8; j++) {
-            if ((page_bitmap[i] & ~(1 << j)) == FREE) {
+            if ((page_bitmap[i] & (1 << j)) == FREE) {
                 page_bitmap[i] |= 1 << j;
                 return (i * 8 + j) * PAGE_SIZE; // The physical address
             }
@@ -24,6 +26,16 @@ uintptr_t allocate_physical_page() {
     }
 
     return NULL;
+}
+
+void mask_pages(uint32_t start, uint32_t end) {
+    if (end <= start || end > MAX_PAGES)
+        return;
+
+    uint32_t startByte = start / 8, startBit = start % 8;
+    uint32_t endByte = end / 8, endBit = end % 8;
+
+    memset(page_bitmap + startByte, 0b11111111, endByte - startByte);
 }
 
 // the parameter page is a physical address.
@@ -35,11 +47,11 @@ void free_physical_page(uintptr_t addr) {
     page_bitmap[page_index] &= ~(1 << page_bit);
 }
 
-uint32_t page_directory[1024];
+uint32_t kpage_directory[1024];
 
 uint32_t* init_vmm() {
-    memset(page_directory, 0, 4 * sizeof(page_directory));
-    return page_directory;
+    memset(kpage_directory, 0, sizeof(kpage_directory));
+    return kpage_directory;
 }
 
 #define MASK_FLAGS 0x3FF
@@ -68,13 +80,7 @@ int map_page(uintptr_t pd, uintptr_t virtual_addr, uint32_t physical_addr, uint1
     }
 
     PDE(pd, virtual_addr) |= flags | ENTRY_PRESENT;
-
-    if (!PRESENT(PTE(pd, virtual_addr))
-            && !(PDE(pd, virtual_addr) = allocate_physical_page())) {
-        return -1;
-    }
-
-    PTE(pd, virtual_addr) |= flags | ENTRY_PRESENT;
+    PTE(pd, virtual_addr) = physical_addr | flags | ENTRY_PRESENT;
     
     return 0;
 }

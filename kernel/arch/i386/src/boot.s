@@ -1,7 +1,7 @@
 // Multiboot definitions
-.set ALIGN,    1
-.set MEMINFO,  0b10             
-.set FLAGS,    ALIGN | MEMINFO  
+.set ALIGN,    0b00000001
+.set MEMINFO,  0b00000010             
+.set FLAGS,    ALIGN | MEMINFO
 .set MAGIC,    0x1BADB002       
 .set CHECKSUM, -(MAGIC + FLAGS) 
 
@@ -20,18 +20,6 @@ stack_bottom:
 stack_top:
 
 .section .data
-
-.align 8
-idt_start:
-.rept 256
-.word 0x0, 0x0, 0x0, 0x0
-.endr
-
-idt_end:
-
-idt_desc:
-.word idt_start - idt_end - 1
-.long idt_start
 
 gdt_start:
 
@@ -77,11 +65,12 @@ page_table1:
 _start:
     // Save the address to the multiboot structure
     movl %ebx, %esi
+    movl %eax, %edi
 
     // Map the pages of the kernel so that we can run the c code
     movl $0, %eax // Start at memory address 0
     movl $(page_table1 - 0xC0000000), %ebx
-    movl $1023, %ecx
+    movl $1022, %ecx
 
 1:
     // Skip all addresses before the kernel and all after it
@@ -100,6 +89,46 @@ _start:
 
     loop 1b
 3:
+    // Mapping the multiboot info
+    movl %ebx, %ecx
+    xorl %edx, %edx
+    movl %esi, %eax
+    movl $4096, %ebx
+    divl %ebx // Remainder in %edx
+
+    movl %esi, %eax
+    subl %edx, %eax // Get the page boundary
+    addl $0x3, %eax // Add the flags
+
+    movl %eax, page_table1 - 0xC0000000 + 1022 * 4
+
+    // Mapping the multiboot memory map
+    movl (%esi), %eax
+    shrl $6, %eax // Memory map flag is the sixth bit
+    andl $1, %eax
+    cmpl $1, %eax
+    je _no_halt // If the memory map is invalid, halt 
+_halt2:
+    cli
+    hlt
+    jmp _halt2
+
+_no_halt:
+    movl %esi, %ebx
+    addl $48, %ebx
+    movl (%ebx), %eax // Eax now contains the address to the memory map
+
+    movl $4096, %ecx
+    movl %edx, %edi // Save the remainder for calculating the multiboot info structure's virtual address
+    divl %ecx
+
+    movl (%ebx), %eax
+    subl %edx, %eax // Get the page boundary
+    orl $0x3, %eax // Add the flags
+
+    movl %eax, page_table1 - 0xC0000000 + 1021 * 4
+
+4:
     // Mapping the video RAM to 1024th page table entry
     movl $(0x000B8000 + 0x3), page_table1 - 0xC0000000 + 1023 * 4
 
@@ -114,12 +143,12 @@ _start:
     orl $0x80010000, %eax
     movl %eax, %cr0
 
-    lea 4f, %eax
+    lea 5f, %eax
     jmp *%eax
 
 .section .text
 
-4:
+5:
     movl $0, page_directory
 
     // Reload the page directory without the identity mapping
@@ -128,11 +157,23 @@ _start:
 
     movl $stack_top, %esp
 
+    pushl %edx
     cli
+    call _init
+    popl %edx
 
+    movl $0xC03FE000, %esi
+    addl %edi, %esi 
+
+    movl $0xC03FD000, %edi
+    addl %edx, %edi
+
+    pushl %edi
     pushl %esi
     call kernel
-    addl $4, %esp
+    addl $8, %esp
+
+    call _fini
 
 .type setup_gdt, @function
 .globl setup_gdt

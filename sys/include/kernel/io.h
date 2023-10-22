@@ -8,10 +8,5 @@ inline void outb(uint16_t port, uint8_t value) {
     asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
 }
 
-inline uint8_t inb(uint16_t port) {
-    uint8_t data;
-    asm volatile ("inb %1, %0" : "=a" (data) : "Nd" (port));
-    return data;
-}
-
+uint8_t inb(uint16_t port); 
 #endif
