@@ -11,6 +11,7 @@ void kpanic() {
 }
 
 void kpanic_err(const char* msg) {
+    terminal_set_color(VGA_COLOR_WHITE, VGA_COLOR_RED);
     terminal_writestring(msg);
 
     while (true)

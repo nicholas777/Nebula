@@ -17,7 +17,7 @@ extern void setup_interrupts_x86();
 
 extern void* __kernel_start, __kernel_end;
 
-void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap) {
+void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t* boot_page_dir) {
     terminal_init();
 
 #if defined(__x86__)
@@ -29,6 +29,7 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap) {
 
     printf("Initializing the memory manager...\n");
     init_pmm();
+    mask_pages(0, 8); // Invalidate address 0
 
 #if defined(__x86__)
     // Parsing the multiboot info structure
@@ -51,6 +52,8 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap) {
 #endif
 
     uint32_t* pd = init_vmm();
+    boot_page_dir[1023] = pd[1023]; // For the mappings for the other page tables
+    asm volatile ("mov %0, %%cr3" : : "r"((uintptr_t)boot_page_dir - 0xC0000000)); // Reload the paging
 
     // Mapping the kernel
     uint32_t kernel_size = ((uintptr_t)&__kernel_end - 0xC0000000) - (uintptr_t)&__kernel_start;
@@ -59,16 +62,21 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap) {
     uint32_t kernel_pages = (kernel_size / PAGE_SIZE) + 1;
     printf("Kernel covers %u pages\n", kernel_pages);
 
-    if (kernel_pages > 1024)
-        kpanic_err("Error: kernel covers more than 1024 pages");
+    if (kernel_pages > 1023)
+        // This means that it will be overwritted by VGA memory
+        kpanic_err("Error: kernel covers more than 1023 pages");
 
-    // The first page table is reserved for the other page tables
-    uintptr_t kernel_virtual_addr = &__kernel_start + 0xC0001000;
+    uint32_t kernel_virtual_addr = (uintptr_t)&__kernel_start + 0xC0000000;
 
-    for (uint32_t i = &__kernel_start; i < &__kernel_end; i += PAGE_SIZE) {
+    for (uint32_t i = &__kernel_start; i < (&__kernel_end - 0xC0000000); i += PAGE_SIZE) {
         map_page(pd, kernel_virtual_addr, i, 0x3);
         kernel_virtual_addr += 0x00001000;
     }
+
+    // Video memory
+    map_page(pd, get_virtual_addr_from_index(768, 1023), 0xB8000, 0x3);
+
+    switch_page_directory((uintptr_t)pd - 0xC0000000);
 
     printf("Initializing keyboard...\n");
     init_keyboard();

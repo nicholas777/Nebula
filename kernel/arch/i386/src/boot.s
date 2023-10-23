@@ -168,6 +168,9 @@ _no_halt:
     movl $0xC03FD000, %edi
     addl %edx, %edi
 
+    lea page_directory, %eax
+
+    pushl %eax
     pushl %edi
     pushl %esi
     call kernel
