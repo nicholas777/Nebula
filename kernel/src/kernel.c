@@ -68,20 +68,42 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t*
 
     uint32_t kernel_virtual_addr = (uintptr_t)&__kernel_start + 0xC0000000;
 
-    for (uint32_t i = &__kernel_start; i < (&__kernel_end - 0xC0000000); i += PAGE_SIZE) {
-        map_page(pd, kernel_virtual_addr, i, 0x3);
+    for (uintptr_t i = &__kernel_start; i < (uintptr_t)(&__kernel_end - 0xC0000000); i += PAGE_SIZE) {
+        map_page((uintptr_t)pd, kernel_virtual_addr, i, 0x3);
         kernel_virtual_addr += 0x00001000;
     }
 
     // Video memory
-    map_page(pd, get_virtual_addr_from_index(768, 1023), 0xB8000, 0x3);
+    map_page((uintptr_t)pd, get_virtual_addr_from_index(768, 1023), 0xB8000, 0x3);
 
     switch_page_directory((uintptr_t)pd - 0xC0000000);
+
+    // The 769th page directory will be reserved for the heap
+
+    for (uintptr_t i = (769 << 22); i < (770 << 22); i += PAGE_SIZE) {
+        map_page((uintptr_t)pd, i, allocate_physical_page(), 0x3);
+    }
+
+    init_kernel_heap((769 << 22), 1024);
+
+    int* ptr = (int*)kalloc(4);
+    *ptr = 3;
+    kfree(ptr);
+
+    ptr = (int*)kalloc(4);
+    ptr = (int*)kalloc(4);
+    ptr = (int*)kalloc(4);
+    ptr = (int*)kalloc(4);
+
+    ptr = (int*)kalloc(1024);
+
 
     printf("Initializing keyboard...\n");
     init_keyboard();
 
     printf("Kernel initialization complete!\n");
+
+
 
     asm volatile ("sti");
 

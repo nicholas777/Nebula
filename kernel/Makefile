@@ -37,7 +37,7 @@ else
 endif
 
 KERNEL_OBJS := $(ARCH_OBJS) src/kernel.o src/vga.o src/terminal.o \
-			   src/keyboard.o src/exceptions.o src/common.o
+			   src/keyboard.o src/exceptions.o src/common.o src/heap.o
 OBJ_FILES := \
 	$(ARCH_DIR)/src/crti.o $(ARCH_DIR)/src/crtbegin.o \
 	$(KERNEL_OBJS) \

@@ -8,7 +8,7 @@ LD := $(GNU_ARCH)-ld
 AS := $(GNU_ARCH)-as
 AR := $(GNU_ARCH)-ar
 
-CFLAGS_LIBK := -ffreestanding --std=gnu11 -Wall -Wextra -g
+CFLAGS_LIBK := -ffreestanding --std=gnu11 -Wall -Wextra -g -fstack-protector
 CPPFLAGS_LIBK := -D__IS_LIBK -Iinclude
 
 SYSTEM_DIR := ../sys
