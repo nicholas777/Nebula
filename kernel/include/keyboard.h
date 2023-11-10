@@ -1,5 +1,5 @@
-#ifndef __KEYBOARD_H
-#define __KEYBOARD_H
+#ifndef _KEYBOARD_H
+#define _KEYBOARD_H
 
 void init_keyboard();
 

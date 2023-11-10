@@ -4,6 +4,8 @@
 #include "kernel/memory.h"
 #include "kernel/multiboot.h"
 #include "kernel/common.h"
+#include "kernel/threads.h"
+#include "kernel/io.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -19,6 +21,14 @@ extern void* __kernel_start, __kernel_end;
 
 void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t* boot_page_dir) {
     terminal_init();
+
+    if (init_serial()) {
+        kpanic_err("Initialization of serial hardware failed");
+    }
+
+    for (int i = 'a'; i <= 'z'; i++) {
+        write_serial((char)i);
+    }
 
 #if defined(__x86__)
     printf("Initializing GDT and interrupts...\n");
@@ -86,24 +96,10 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t*
 
     init_kernel_heap((769 << 22), 1024);
 
-    int* ptr = (int*)kalloc(4);
-    *ptr = 3;
-    kfree(ptr);
-
-    ptr = (int*)kalloc(4);
-    ptr = (int*)kalloc(4);
-    ptr = (int*)kalloc(4);
-    ptr = (int*)kalloc(4);
-
-    ptr = (int*)kalloc(1024);
-
-
     printf("Initializing keyboard...\n");
     init_keyboard();
 
     printf("Kernel initialization complete!\n");
-
-
 
     asm volatile ("sti");
 

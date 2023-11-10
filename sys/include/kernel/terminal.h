@@ -1,5 +1,5 @@
-#ifndef __TERMINAL_H
-#define __TERMINAL_H
+#ifndef _TERMINAL_H
+#define _TERMINAL_H
 
 #include "vga.h"
 

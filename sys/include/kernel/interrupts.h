@@ -1,5 +1,5 @@
-#ifndef __INTERRUPTS_H
-#define __INTERRUPTS_H
+#ifndef _INTERRUPTS_H
+#define _INTERRUPTS_H
 
 typedef void (*isr_t)(void);
 

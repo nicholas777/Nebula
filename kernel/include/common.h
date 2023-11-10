@@ -1,5 +1,5 @@
-#ifndef __COMMON_H
-#define __COMMON_H
+#ifndef _COMMON_H
+#define _COMMON_H
 
 __attribute__((noreturn))
 void kpanic();

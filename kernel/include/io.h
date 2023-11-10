@@ -1,12 +1,16 @@
-#ifndef __IO_H
-#define __IO_H
+#ifndef _IO_H
+#define _IO_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-inline void outb(uint16_t port, uint8_t value) {
-    asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
-}
-
+void outb(uint16_t port, uint8_t value);
 uint8_t inb(uint16_t port); 
+
+// Serial
+int init_serial();
+
+char read_serial();
+void write_serial(char c);
+
 #endif

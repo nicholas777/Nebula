@@ -1,5 +1,5 @@
-#ifndef __EXCEPTIONS_H
-#define __EXCEPTIONS_H
+#ifndef _EXCEPTIONS_H
+#define _EXCEPTIONS_H
 
 void init_exception_handlers();
 
