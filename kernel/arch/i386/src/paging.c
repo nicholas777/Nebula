@@ -127,6 +127,10 @@ int page_exists(uintptr_t pd, uintptr_t addr) {
     return 1;
 }
 
+uint32_t* get_kernel_pd() {
+    return kpage_directory;
+}
+
 void switch_page_directory(uintptr_t pd) {
     asm volatile ("movl %0, %%cr3" : : "r"(pd));
 }
@@ -231,7 +235,7 @@ void *kalloc_page() {
 }
 
 void kfree_page(uintptr_t addr) {
-    ((uint32_t*)get_page_table_address(address_get_pde(addr)))[address_get_pte(addr)] = 0;
+    (((uint32_t*)get_page_table_address(address_get_pde(addr)))[address_get_pte(addr)]) = 0;
 }
 
 

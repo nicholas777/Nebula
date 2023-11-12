@@ -21,6 +21,8 @@ void init_pmm();
 uint32_t address_get_page(uintptr_t virtual_addr);
 int page_exists(uintptr_t pd, uintptr_t addr);
 
+uint32_t* get_kernel_pd();
+
 // Util
 uint32_t address_get_pde(uint32_t virtual_addr);
 uint32_t address_get_pte(uint32_t virtual_addr);

@@ -1,18 +1,18 @@
+#include "kernel/io.h"
 #include "kernel/keyboard.h"
 #include "kernel/terminal.h"
 #include "kernel/multiboot.h"
 #include "kernel/memory.h"
 #include "kernel/common.h"
 
+#include "common.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
-typedef enum _test_type {
-    INVALID = 0,
-    TERMINAL, INTERRUPTS, MEMORY_MANAGER
-} test_type_t;
-
-#define MAX_TYPE MEMORY_MANAGER
+void test_print(const char *assert) {
+    serial_print(assert);
+}
 
 int test_types[] = {
     #define DECLARE_TEST(name, function, type) type,
@@ -169,7 +169,19 @@ void ktest(multiboot_info_t *multiboot, multiboot_memory_map_t *mmap, uint32_t *
         }
 
         // Run the test
-        test_functions[last_index]();
+        serial_print("Running test: ");
+        serial_print(test_names[last_index]);
+        serial_print("\n");
+
+        int status = test_functions[last_index]();
+        switch (status) {
+            case success:
+                serial_print("Test passed\n");
+                break;
+            case failure:
+                serial_print("Test failed\n");
+                break;
+        }
     }
 
     init_keyboard();
