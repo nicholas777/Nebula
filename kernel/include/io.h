@@ -13,4 +13,6 @@ int init_serial();
 char read_serial();
 void write_serial(char c);
 
+void serial_print(const char* msg);
+
 #endif

@@ -17,17 +17,13 @@ extern void setup_gdt();
 extern void setup_interrupts_x86();
 #endif
 
-extern void* __kernel_start, __kernel_end;
+extern void *__kernel_start, __kernel_end;
 
-void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t* boot_page_dir) {
+void kmain(multiboot_info_t *multiboot, multiboot_memory_map_t *mmap, uint32_t *boot_page_dir) {
     terminal_init();
 
     if (init_serial()) {
         kpanic_err("Initialization of serial hardware failed");
-    }
-
-    for (int i = 'a'; i <= 'z'; i++) {
-        write_serial((char)i);
     }
 
 #if defined(__x86__)
@@ -61,7 +57,7 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t*
 
 #endif
 
-    uint32_t* pd = init_vmm();
+    uint32_t *pd = init_vmm();
     boot_page_dir[1023] = pd[1023]; // For the mappings for the other page tables
     asm volatile ("mov %0, %%cr3" : : "r"((uintptr_t)boot_page_dir - 0xC0000000)); // Reload the paging
 
@@ -78,7 +74,7 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t*
 
     uint32_t kernel_virtual_addr = (uintptr_t)&__kernel_start + 0xC0000000;
 
-    for (uintptr_t i = &__kernel_start; i < (uintptr_t)(&__kernel_end - 0xC0000000); i += PAGE_SIZE) {
+    for (uintptr_t i = &__kernel_start; i < (uintptr_t)&__kernel_end - 0xC0000000; i += PAGE_SIZE) {
         map_page((uintptr_t)pd, kernel_virtual_addr, i, 0x3);
         kernel_virtual_addr += 0x00001000;
     }
@@ -107,5 +103,15 @@ void kernel(multiboot_info_t* multiboot, multiboot_memory_map_t* mmap, uint32_t*
         ;
 
     printf("Kernel exit\n");
+}
+
+extern void ktest(multiboot_info_t *multiboot, multiboot_memory_map_t *mmap, uint32_t *boot_page_dir);
+
+void kernel(multiboot_info_t *multiboot, multiboot_memory_map_t *mmap, uint32_t *boot_page_dir) {
+#if defined(ENABLE_TESTS)
+    ktest(multiboot, mmap, boot_page_dir);
+#else
+    kmain(multiboot, mmap, boot_page_dir);
+#endif
 }
 

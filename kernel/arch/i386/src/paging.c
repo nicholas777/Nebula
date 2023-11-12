@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define MAX_PAGES 131072 // (1024 * 1024) / 8
+#define MAX_PAGES 131072 // (1024  *1024) / 8
 
 uint8_t page_bitmap[MAX_PAGES];
 
@@ -20,7 +20,7 @@ uintptr_t allocate_physical_page() {
         for (size_t j = 0; j < 8; j++) {
             if ((page_bitmap[i] & (1 << j)) == FREE) {
                 page_bitmap[i] |= 1 << j;
-                return (i * 8 + j) * PAGE_SIZE; // The physical address
+                return (i  *8 + j)  *PAGE_SIZE; // The physical address
             }
         }
     }
@@ -52,7 +52,7 @@ uint32_t kpage_directory[1024] __attribute__((aligned(4096)));
 // Used for mapping all the other page tables
 uint32_t kpage_table_last[1024] __attribute__((aligned(4096))); 
 
-uint32_t* init_vmm() {
+uint32_t *init_vmm() {
     memset(kpage_directory, 0, sizeof(kpage_directory));
     memset(kpage_table_last, 0, sizeof(kpage_table_last));
 
@@ -111,7 +111,7 @@ int map_page(uintptr_t pd, uintptr_t virtual_addr, uint32_t physical_addr, uint1
         map_page_table(pd_index, pt_addr);
     }
 
-    uint32_t* pt = (uint32_t*)get_page_table_address(address_get_pde(virtual_addr));
+    uint32_t *pt = (uint32_t*)get_page_table_address(address_get_pde(virtual_addr));
     pt[address_get_pte(virtual_addr)] = physical_addr | flags | ENTRY_PRESENT;
     
     return 0;
@@ -140,7 +140,7 @@ uint32_t address_get_page(uintptr_t virtual_addr) {
     return NULL;
 }
 
-void* kalloc_find_page(int start_pde, int start_pte) {
+void *kalloc_find_page(int start_pde, int start_pte) {
     int pde, pte = -1;
 
     if (start_pde == 0 && start_pte == 0)
@@ -156,7 +156,7 @@ void* kalloc_find_page(int start_pde, int start_pte) {
             break;
         }
 
-        uint32_t* page_table = (uint32_t*)get_page_table_address(pde);
+        uint32_t *page_table = (uint32_t*)get_page_table_address(pde);
         for (int i = start_pte; i < 1024; i++) {
             if (PRESENT(page_table[i]))
                 continue;
@@ -175,7 +175,7 @@ void* kalloc_find_page(int start_pde, int start_pte) {
     return (void*)get_virtual_addr_from_index(pde, pte);
 }
 
-void* kalloc_page_n(uint32_t n) {
+void *kalloc_page_n(uint32_t n) {
     if (n > 1024 || n == 0)
         return NULL;
 
@@ -197,7 +197,7 @@ void* kalloc_page_n(uint32_t n) {
             }
 
             uint32_t pt_entry = ((uint32_t*)get_page_table_address(address_get_pde(
-                        page + i * PAGE_SIZE)))[address_get_pte(page + i * PAGE_SIZE)];
+                        page + i  *PAGE_SIZE)))[address_get_pte(page + i  *PAGE_SIZE)];
 
             if (PRESENT(pt_entry)) {
                 pde = -1;
@@ -217,7 +217,7 @@ void* kalloc_page_n(uint32_t n) {
                 pte -= 1024;
             }
 
-            map_page((uintptr_t)kpage_directory, page + i * PAGE_SIZE, allocate_physical_page(), 0x3);
+            map_page((uintptr_t)kpage_directory, page + i  *PAGE_SIZE, allocate_physical_page(), 0x3);
         }
 
         break;
@@ -226,7 +226,7 @@ void* kalloc_page_n(uint32_t n) {
     return (void*)page;
 }
 
-void* kalloc_page() {
+void *kalloc_page() {
     return kalloc_page_n(1);
 }
 

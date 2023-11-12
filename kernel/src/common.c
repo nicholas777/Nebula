@@ -3,7 +3,9 @@
 #include "kernel/terminal.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 void kpanic() {
     while (true)
@@ -26,5 +28,11 @@ uint8_t inb(uint16_t port) {
     uint8_t data;
     asm volatile ("inb %1, %0" : "=a" (data) : "Nd" (port));
     return data;
+}
+
+void serial_print(const char *msg) {
+    for (size_t i = 0; i < strlen(msg); i++) {
+        write_serial(msg[i]);
+    }
 }
 
